@@ -26,20 +26,37 @@
 #include "stdio.h"
 #include "utils.h"
 
+#define UNROLL 4
+
 void YCrCb_to_ARGB(uint8_t *YCrCb_MCU[3], uint32_t *RGB_MCU, uint32_t nb_MCU_H, uint32_t nb_MCU_V)
 {
    uint8_t *MCU_Y, *MCU_Cr, *MCU_Cb;
-   uint8_t index, i, j;
-   /* TODO: Your own variables declaration here */
-   ... /* Just to make sure it won't compile out of the box */
+   int32_t R, G, B;
+   uint32_t ARGB;
+   uint8_t index, i, j, k;
 
    MCU_Y = YCrCb_MCU[0];
    MCU_Cr = YCrCb_MCU[2];
    MCU_Cb = YCrCb_MCU[1];
 
    for (i = 0; i < 8 * nb_MCU_V; i++) {
-      for (j = 0; j < 8 * nb_MCU_H; /* TODO: Adjust as needed */) {
-         ... /* TODO: juste fait le ! */
+      for (j = 0; j < 8 * nb_MCU_H; j += UNROLL) {
+         for (k = 0; k < UNROLL; k++) {
+            index = i * (8 * nb_MCU_H)  + (j+k);
+            R = ((MCU_Y[index] << 8) + (MCU_Cr[index] - 128) * 359) >> 8;
+            G = ((MCU_Y[index] << 8) - (MCU_Cr[index] - 128) * 183 -
+                  (MCU_Cb[index] - 128) * 88) >> 8;
+            B = ((MCU_Y[index] << 8) + (MCU_Cb[index] - 128) * 455) >> 8;
+            /* Saturate */
+            if (R > 255) R = 255;
+            if (R < 0)   R = 0;
+            if (G > 255) G = 255;
+            if (G < 0)   G = 0;
+            if (B > 255) B = 255;
+            if (B < 0)   B = 0;
+            ARGB = (R << 16) | (G << 8) | (B);
+            RGB_MCU[index] = ARGB;
+         }
       }
    }
 }
