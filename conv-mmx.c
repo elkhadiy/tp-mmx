@@ -145,17 +145,20 @@ void YCrCb_to_ARGB(uint8_t *YCrCb_MCU[3], uint32_t *RGB_MCU, uint32_t nb_MCU_H, 
           * mm5: B
           */
 
-         __asm__("punpcklhw %mm7, %mm3"); // mm7 et mm3 -> mm3
-         __asm__("punpcklhw %mm4, %mm5"); // mm4 et mm5 -> mm5
+         __asm__("punpcklbw %mm7, %mm3"); // mm7 et mm3 -> mm3
+         __asm__("punpcklbw %mm4, %mm5"); // mm4 et mm5 -> mm5
 
          // TODO: faire des copies
-         __asm__("punpcklbw %mm3, %mm5"); // A
-         __asm__("punpcklhw %mm3, %mm5"); // B
+         __asm__("movq %mm5, %mm4");
+         __asm__("punpckhwd %mm3, %mm5"); // A
+         __asm__("punpcklwd %mm3, %mm4"); // B
 
          // On a 3 dans les poids forts de A
          // On a 2 dans les poids faible de A
          // On a 1 dans les poids forts de B
          // On a 0 dans les poids faible de B
+         __asm__("movq %%mm5, %0":"=m"(RGB_MCU[index]));
+         __asm__("movq %%mm4, %0":"=m"(RGB_MCU[index+2]));
       }
    }
 }
