@@ -1,0 +1,4 @@
+pour décoder N frames
+time ./mjpeg video N x
+time ./mjpeg video -1 x
+
