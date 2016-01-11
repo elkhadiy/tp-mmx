@@ -2,3 +2,5 @@ pour d√©coder N frames
 time ./mjpeg video N x
 time ./mjpeg video -1 x
 
+Pour r√cup√rer l'archi d'un proco
+https://wiki.gentoo.org/wiki/Safe_CFLAGS
