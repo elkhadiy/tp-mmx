@@ -30,7 +30,8 @@
 #include <stdint.h>
 
 #define EXPAND(x) ((x)<<48|(x)<<32|(x)<<16|(x))
-#define RGB_DEBUG
+//#define RGB_DEBUG
+//#define RGB_DEBUG
 
 /* SIMD optimized integer version with 4 iterations unrolled */
 void YCrCb_to_ARGB(uint8_t *YCrCb_MCU[3], uint32_t *RGB_MCU, uint32_t nb_MCU_H, uint32_t nb_MCU_V)
@@ -160,34 +161,29 @@ void YCrCb_to_ARGB(uint8_t *YCrCb_MCU[3], uint32_t *RGB_MCU, uint32_t nb_MCU_H, 
          __asm__("movq %%mm3, %0":"=m"(B[0]));
 			printf("B = %02i %02i %02i %02i %02i %02i %02i %02i\n", B[7], B[6], B[5], B[4], B[3], B[2], B[1], B[0]);
 #endif
-         /* TODO: Now the 4 lowest bytes of mm3, mm4 and mm5 contain the 
+         /* Now the 4 lowest bytes of mm3, mm4 and mm5 contain the 
           * 4 R, G and B values  of the iteration.
           * We do some kind of matrix transpose to build the 2 times
           * 64 words containing the appropriate values:
           * First, produce a 0/R word, then a G/B word, and finally
           * mix them to produce two 0/R/G/B quads */
 
-         __asm__("pxor      %mm7, %mm7");
-         /* mm7: 0
-          * mm3: R
-          * mm4: G
-          * mm5: B
+         /* mm7 := 0 0 0 0 0 0 0 0
+          * mm3 := 0 0 0 0 R3 R2 R1 R0
+          * mm4 := 0 0 0 0 G3 G2 G1 G0
+          * mm5 := 0 0 0 0 B3 B2 B1 B0
           */
-			/*
-         __asm__("punpcklbw %mm7, %mm3"); // mm7 et mm3 -> mm3
-         __asm__("punpcklbw %mm4, %mm5"); // mm4 et mm5 -> mm5
+			//*
+         __asm__("punpcklbw %mm7, %mm3"); // mm3 := 0  R3 0  R2 0  R1 0  R0
+         __asm__("punpcklbw %mm4, %mm5"); // mm5 := B3 G3 B2 G2 B1 G1 B0 G0
 
-         // TODO: faire des copies
-         __asm__("movq %mm5, %mm4");
-         __asm__("punpckhwd %mm3, %mm5"); // A
-         __asm__("punpcklwd %mm3, %mm4"); // B
+         
+         __asm__("movq %mm5, %mm4");      // saving mm5 in mm4 for the second quad
+         __asm__("punpckhwd %mm3, %mm5"); // mm5 := 0 R3 B3 G3 0 R2 B2 G2
+         __asm__("punpcklwd %mm3, %mm4"); // mm4 := 0 R1 B1 G1 0 R0 B0 G0
 
-         // On a 3 dans les poids forts de A
-         // On a 2 dans les poids faible de A
-         // On a 1 dans les poids forts de B
-         // On a 0 dans les poids faible de B
-         __asm__("movq %%mm5, %0":"=m"(RGB_MCU[index]));
-         __asm__("movq %%mm4, %0":"=m"(RGB_MCU[index+2]));
+         __asm__("movq %%mm4, %0":"=m"(RGB_MCU[index]));
+         __asm__("movq %%mm5, %0":"=m"(RGB_MCU[index+2]));
 			//*/
       }
    }
