@@ -106,7 +106,10 @@ void YCrCb_to_ARGB(uint8_t *YCrCb_MCU[3], uint32_t *RGB_MCU, uint32_t nb_MCU_H, 
 			//*
          uint64_t cst_359 = EXPAND((uint64_t)359);
          __asm__("movq %mm1, %mm3");                   // mm3 := (Cr_i-128)
-         __asm__("pmullw %0, %%mm3"::"m"(cst_359));    // mm3 := (Cr_i-128)*359
+         __asm__("pmullw %0, %%mm3"::"m"(cst_359));    // mm3 := (Cr_i-128)*359 low
+			__asm__("movq %mm1, %mm4");                   // mm4 := (Cr_i-128)
+			__asm__("pmulhw %0, %%mm4"::"m"(cst_359));    // mm4 := (Cr_i-128)*359 high
+			__asm__("paddw %mm4, %mm3");
          __asm__("paddw %mm0, %mm3");                  // mm3 := (Y_i<<8) + (Cb_i-128)*359
          __asm__("psrlw $8, %mm3");                    // mm3 := ((Y_i<<8) + (Cb_i-128)*359) >> 8
          __asm__("packuswb %mm7, %mm3");               // mm3 := 0 0 0 0 R3 R2 R1 R0
@@ -125,6 +128,9 @@ void YCrCb_to_ARGB(uint8_t *YCrCb_MCU[3], uint32_t *RGB_MCU, uint32_t nb_MCU_H, 
 			//*
          __asm__("movq %mm1, %mm5");                  // mm5 := (Cr_i-128)
          __asm__("pmullw %0, %%mm5"::"m"(cst_183));   // mm5 := (Cr_i-128)*183
+			__asm__("movq %mm1, %mm6");                  // mm6 := (Cr_i-128)
+         __asm__("pmulhw %0, %%mm6"::"m"(cst_183));   // mm6 := (Cr_i-128)*183
+			__asm__("paddw %mm6, %mm5");
          __asm__("movq %mm0, %mm4");                  // mm4 := (Y_i<<8)
          __asm__("psubw %mm5, %mm4");                 // mm4 := (Y_i<<8) - (Cr_i-128)*183
 			//*/
@@ -133,6 +139,9 @@ void YCrCb_to_ARGB(uint8_t *YCrCb_MCU[3], uint32_t *RGB_MCU, uint32_t nb_MCU_H, 
 			//*
          __asm__("movq %mm2, %mm5");                  // mm5 := (Cb_i-128)
          __asm__("pmullw %0, %%mm5"::"m"(cst_88));    // mm5 := (Cb_i-128)*88
+			__asm__("movq %mm2, %mm6");                  // mm6 := (Cb_i-128)
+         __asm__("pmulhw %0, %%mm6"::"m"(cst_88));    // mm6 := (Cb_i-128)*88
+			__asm__("paddw %mm6, %mm5");
          __asm__("psubw %mm5, %mm4");                 // mm4 := (Y_i<<8) - (Cr_i-128)*183 - (Cb_i-128)*88
          __asm__("psrlw $8, %mm4");                   // mm4 := ((Y_i<<8) - (Cr_i-128)*183 - (Cb_i-128)*88) >> 8
          __asm__("packuswb %mm6, %mm4");              // mm4 := 0 0 0 0 G3 G2 G1 G0
@@ -150,6 +159,9 @@ void YCrCb_to_ARGB(uint8_t *YCrCb_MCU[3], uint32_t *RGB_MCU, uint32_t nb_MCU_H, 
          uint64_t cst_455 = EXPAND((uint64_t)455);
          __asm__("movq %mm2, %mm5");                   // mm5 := (Cb_i-128)
          __asm__("pmullw %0, %%mm5"::"m"(cst_455));    // mm5 := (Cb_i-128)*359
+			__asm__("movq %mm2, %mm6");                   // mm6 := (Cb_i-128)
+         __asm__("pmulhw %0, %%mm6"::"m"(cst_455));    // mm6 := (Cb_i-128)*359
+			__asm__("paddw %mm6, %mm5");
          __asm__("paddw %mm0, %mm5");                  // mm5 := (Y_i<<8) + (Cb_i-128)*455
          __asm__("psrlw $8, %mm5");                    // mm5 := ((Y_i<<8) + (Cb_i-128)*455) >> 8
          __asm__("packuswb %mm7, %mm5");               // mm5 := 0 0 0 0 B3 B2 B1 B0
@@ -177,7 +189,6 @@ void YCrCb_to_ARGB(uint8_t *YCrCb_MCU[3], uint32_t *RGB_MCU, uint32_t nb_MCU_H, 
          __asm__("punpcklbw %mm7, %mm3"); // mm3 := 0  R3 0  R2 0  R1 0  R0
          __asm__("punpcklbw %mm4, %mm5"); // mm5 := B3 G3 B2 G2 B1 G1 B0 G0
 
-         
          __asm__("movq %mm5, %mm4");      // saving mm5 in mm4 for the second quad
          __asm__("punpckhwd %mm3, %mm5"); // mm5 := 0 R3 B3 G3 0 R2 B2 G2
          __asm__("punpcklwd %mm3, %mm4"); // mm4 := 0 R1 B1 G1 0 R0 B0 G0
